@@ -1457,7 +1457,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-1"
+name = "rust-solserv"
 version = "0.1.0"
 dependencies = [
  "axum",

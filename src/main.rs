@@ -15,9 +15,16 @@ use std::str::FromStr;
 use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Serialize)]
-struct KeypairResponse {
-    success: bool,
-    data: KeypairData,
+#[serde(untagged)]
+enum KeypairResponse {
+    Success {
+        success: bool,
+        data: KeypairData,
+    },
+    Error {
+        success: bool,
+        error: String,
+    },
 }
 
 #[derive(Serialize)]
@@ -97,9 +104,9 @@ enum SignMessageResponse {
 
 #[derive(Serialize)]
 struct SignMessageData {
+    message: String,
     signature: String,
     public_key: String,
-    message: String,
 }
 
 #[derive(Serialize)]
@@ -123,19 +130,28 @@ struct VerifyMessageData {
 }
 
 async fn generate_keypair() -> Json<KeypairResponse> {
-    let mut csprng = thread_rng();
-    let keypair = Keypair::generate(&mut csprng);
-    
-    let pubkey = bs58::encode(keypair.public.to_bytes()).into_string();
-    let secret = bs58::encode(keypair.to_bytes()).into_string();
-    
-    Json(KeypairResponse {
-        success: true,
-        data: KeypairData {
-            pubkey,
-            secret,
-        },
-    })
+    match std::panic::catch_unwind(|| {
+        let mut csprng = thread_rng();
+        let keypair = Keypair::generate(&mut csprng);
+        
+        let pubkey = bs58::encode(keypair.public.to_bytes()).into_string();
+        let secret = bs58::encode(keypair.to_bytes()).into_string();
+        
+        (pubkey, secret)
+    }) {
+        Ok((pubkey, secret)) => {
+            Json(KeypairResponse::Success {
+                success: true,
+                data: KeypairData { pubkey, secret },
+            })
+        }
+        Err(_) => {
+            Json(KeypairResponse::Error {
+                success: false,
+                error: "Failed to generate keypair".to_string(),
+            })
+        }
+    }
 }
 
 async fn create_token(ExtractJson(payload): ExtractJson<CreateTokenRequest>) -> Json<CreateTokenResponse> {
