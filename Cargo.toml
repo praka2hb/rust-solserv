@@ -1,0 +1,15 @@
+[package]
+name = "rust-1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1.38", features = ["full"] }
+ed25519-dalek = "1.0.0"
+rand = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+bs58 = "0.4"
+spl-token = "3.5"
+solana-program = "1.18"
+base64 = "0.21"
